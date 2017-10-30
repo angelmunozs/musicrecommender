@@ -9,9 +9,17 @@ PROJECTS_LOCATION=~/www
 # Software installation folder
 INSTALLS_DIR=~/opt
 # Data directory
-DATA_DIR=~/data
+DATA_DIR=~/www/musicrecommender/data
 # Libs location
 LIBS_LOCATION=~/www/musicrecommender/libs
+# Data mirror
+DATA_MIRROR=http://samplecleaner.com
+# Data files
+DATA_FILES = (
+	"artist_alias.txt"
+	"artist_data.txt"
+	"user_artist_data.txt"
+)
 
 # ==============================================================================================================
 # Aux functions
@@ -23,7 +31,7 @@ LIBS_LOCATION=~/www/musicrecommender/libs
 # - $2: Log message
 log () {
 	echo ""
-	tput setaf 4
+	tput setaf 2
 	echo "[$1] $2"
 	tput sgr0
 	echo ""
@@ -43,31 +51,22 @@ line () {
 
 # 1. Install git
 sudo apt-get update
-sudo apt-get install git
+sudo apt-get install -y git
 
-# 2. Make directory project location (if not present yet)
+# 2. Make directories (if not present yet)
 if [ ! -d $PROJECTS_LOCATION ]; then
 	mkdir $PROJECTS_LOCATION
+fi
+if [ ! -d $INSTALLS_DIR ]; then
+	mkdir $INSTALLS_DIR
 fi
 
 # Change directory
 cd $PROJECTS_LOCATION
 
-# 3. Download recommender project (or git pull if present)
-if [ ! -d musicrecommender-reference ]; then
-	git clone git@github.com:sryza/aas.git
-	mv aaa musicrecommender-reference
-	log info "Code for music recommender from @sryza copied to $PROJECTS_LOCATION/musicrecommender-reference."
-else
-	cd musicrecommender-reference
-	git pull
-	cd ..
-	log info "Code for music recommender from @sryza in $PROJECTS_LOCATION/musicrecommender-reference updated."
-fi
-
-# 4. Download custom project (or git pull if present)
+# 3. Download custom project (or git pull if present)
 if [ ! -d musicrecommender ]; then
-	git clone git@github.com:angelmunozs/musicrecommender.git
+	git clone https://github.com/angelmunozs/musicrecommender
 	log info "Code for music recommender from @angelmunozs copied to $PROJECTS_LOCATION/musicrecommender."
 else
 	cd musicrecommender
@@ -79,7 +78,7 @@ fi
 # Change directory
 cd $INSTALLS_DIR
 
-# 5. Download IntelliJ IDEA 2.5 if not present and create alias in .bashrc
+# 4. Download IntelliJ IDEA 2.5 if not present and create alias in .bashrc
 if [ ! -d $INSTALLS_DIR/idea-IC-172.4343.14 ]; then
 	wget https://download.jetbrains.com/idea/ideaIC-2017.2.5.tar.gz
 	tar -zxvf ideaIC-2017.2.5.tar.gz
@@ -88,25 +87,30 @@ if [ ! -d $INSTALLS_DIR/idea-IC-172.4343.14 ]; then
 	log info "IntelliJ IDEA downloaded and installed in $INSTALLS_DIR/idea-IC-172.4343.14."
 fi
 
-# 6. Install Apache Spark
-if [ ! -d $INSTALLS_DIR/idea-IC-172.4343.14 ]; then
+# 5. Install Apache Spark
+if [ ! -d $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7 ]; then
 	wget http://apache.rediris.es/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz
 	tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
 	rm spark-2.2.0-bin-hadoop2.7.tgz
-	ln -s spark-2.2.0-bin-hadoop2.7 spark
+	ln -sf spark-2.2.0-bin-hadoop2.7 spark
 	log info "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7."
 fi
 
-# 7. Install Scala plugin for IDEA
-cp -r $LIBS_LOCATIONlibs/Scala ./idea/plugins
+# 6. Install Scala plugin for IDEA
+cp -r $LIBS_LOCATION/Scala ./idea/plugins
 log info "Plugin Scala for IntelliJ IDEA installed succesfully"
 
 # Change directory
 cd $DATA_DIR
 
-# 8. Download Audioscrobbler data
-# TODO (http://www-etud.iro.umontreal.ca/~bergstrj/audioscrobbler_data.html seems to be down)
+# 7. Download Audioscrobbler data from desired mirror
+for $DATA_FILE in "${DATA_FILES[@]}"
+do
+	if [ ! -f $DATA_FILE ]; then
+		wget $DATA_MIRROR/$DATA_FILE
+	fi
+done
 
-# 9. Open IntelliJ IDEA in background
-$INSTALLS_DIR/idea/bin/idea.sh &
+# 8. Open IntelliJ IDEA in background
 log info "Opening IntelliJ IDEA development tool."
+$INSTALLS_DIR/idea/bin/idea.sh

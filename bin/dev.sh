@@ -95,14 +95,16 @@ if [ ! -d $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7 ]; then
 fi
 
 # 6. Install Scala plugin for IDEA
-cp -r $LIBS_LOCATION/Scala ./idea/plugins
-log info "Plugin Scala for IntelliJ IDEA installed succesfully"
+if [ ! -d ./idea/plugins/Scala ]; then
+	cp -r $LIBS_LOCATION/Scala ./idea/plugins
+	log info "Plugin Scala for IntelliJ IDEA installed succesfully"
+fi
 
 # Change directory
 cd $DATA_DIR
 
 # 7. Download Audioscrobbler data from desired mirror
-for $DATA_FILE in "${DATA_FILES[@]}"
+for DATA_FILE in "${DATA_FILES[@]}"
 do
 	if [ ! -f $DATA_FILE ]; then
 		wget $DATA_MIRROR/$DATA_FILE

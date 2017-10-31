@@ -15,7 +15,7 @@ LIBS_LOCATION=~/www/musicrecommender/libs
 # Data mirror
 DATA_MIRROR=http://samplecleaner.com
 # Data files
-DATA_FILES = (
+DATA_FILES=(
 	"artist_alias.txt"
 	"artist_data.txt"
 	"user_artist_data.txt"

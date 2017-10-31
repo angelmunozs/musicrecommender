@@ -30,11 +30,9 @@ DATA_FILES = (
 # - $1: Log type
 # - $2: Log message
 log () {
-	echo ""
 	tput setaf 2
 	echo "[$1] $2"
 	tput sgr0
-	echo ""
 }
 
 # Function for printing a '=' character till the end of line
@@ -108,6 +106,7 @@ for $DATA_FILE in "${DATA_FILES[@]}"
 do
 	if [ ! -f $DATA_FILE ]; then
 		wget $DATA_MIRROR/$DATA_FILE
+		log info "Downloaded file $DATA_FILE into $DATA_DIR"
 	fi
 done
 

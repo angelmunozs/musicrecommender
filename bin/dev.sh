@@ -83,12 +83,12 @@ cd $PROJECTS_LOCATION
 # 3. Download custom project (or git pull if present)
 if [ ! -d musicrecommender ]; then
 	git clone https://github.com/angelmunozs/musicrecommender
-	log_info "Code for musicrecommender from @angelmunozs copied to $PROJECTS_LOCATION/musicrecommender."
+	log_success "Code for musicrecommender from @angelmunozs copied to $PROJECTS_LOCATION/musicrecommender."
 else
 	cd musicrecommender
 	git pull
 	cd ..
-	log_info "Code for musicrecommender from @angelmunozs in $PROJECTS_LOCATION/musicrecommender updated."
+	log_success "Code for musicrecommender from @angelmunozs in $PROJECTS_LOCATION/musicrecommender updated."
 fi
 
 # Change directory
@@ -100,7 +100,7 @@ if [ ! -d $INSTALLS_DIR/idea-IC-172.4343.14 ]; then
 	tar -zxvf ideaIC-2017.2.5.tar.gz
 	rm ideaIC-2017.2.5.tar.gz
 	ln -sf idea-IC-172.4343.14 idea
-	log_info "IntelliJ IDEA downloaded and installed in $INSTALLS_DIR/idea-IC-172.4343.14."
+	log_success "IntelliJ IDEA downloaded and installed in $INSTALLS_DIR/idea-IC-172.4343.14."
 fi
 
 # 5. Install Apache Spark
@@ -109,13 +109,13 @@ if [ ! -d $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7 ]; then
 	tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
 	rm spark-2.2.0-bin-hadoop2.7.tgz
 	ln -sf spark-2.2.0-bin-hadoop2.7 spark
-	log_info "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7."
+	log_success "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7."
 fi
 
 # 6. Install Scala plugin for IDEA
 if [ ! -d ./idea/plugins/Scala ]; then
 	cp -r $LIBS_LOCATION/Scala ./idea/plugins
-	log_info "Plugin Scala for IntelliJ IDEA installed succesfully"
+	log_success "Plugin Scala for IntelliJ IDEA installed succesfully"
 fi
 
 # Change directory
@@ -126,10 +126,10 @@ for DATA_FILE in "${DATA_FILES[@]}"
 do
 	if [ ! -f $DATA_FILE ]; then
 		wget $DATA_MIRROR/$DATA_FILE
-		log_info "Downloaded file $DATA_FILE into $DATA_DIR"
+		log_success "Downloaded file $DATA_FILE into $DATA_DIR"
 	fi
 done
 
 # 8. Open IntelliJ IDEA in background
-log_info "Opening IntelliJ IDEA development tool."
+log_success "Opening IntelliJ IDEA development tool."
 $INSTALLS_DIR/idea/bin/idea.sh

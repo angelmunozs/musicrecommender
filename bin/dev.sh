@@ -43,14 +43,19 @@ log_info () {
 # Parameters:
 # - $1: Log message
 log_success () {
+	line
 	echo -e "$ICON_SUCCESS $1"
+	line
 }
 
 # Function for logging a success message
 # Parameters:
 # - $1: Log message
 log_error () {
+	line
 	echo -e "$ICON_ERROR $1"
+	line
+	exit 1
 }
 
 # Function for printing a '=' character till the end of line

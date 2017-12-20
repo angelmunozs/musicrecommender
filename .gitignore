@@ -1,2 +1,4 @@
 data/*.txt
 !data/README.txt
+.idea
+*.iml

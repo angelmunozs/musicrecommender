@@ -4,6 +4,10 @@
 # Parameters
 # ==============================================================================================================
 
+# Versions to download
+SPARK_VERSION=2.2.0
+SCALA_VERSION=2.12.4
+IDEA_VERSION=2017.2.5
 # Name of the project container folder
 PROJECTS_LOCATION=~/www
 # Software installation folder
@@ -70,11 +74,11 @@ line () {
 # Main
 # ==============================================================================================================
 
-# 1. Install git
+# Install git
 sudo apt-get update
 sudo apt-get install -y git
 
-# 2. Make directories (if not present yet)
+# Make directories (if not present yet)
 if [ ! -d $PROJECTS_LOCATION ]; then
 	mkdir $PROJECTS_LOCATION
 fi
@@ -85,7 +89,7 @@ fi
 # Change directory
 cd $PROJECTS_LOCATION
 
-# 3. Download custom project (or git pull if present)
+# Download custom project (or git pull if present)
 if [ ! -d musicrecommender ]; then
 	git clone https://github.com/angelmunozs/musicrecommender
 	log_success "Code for musicrecommender from @angelmunozs copied to $PROJECTS_LOCATION/musicrecommender."
@@ -99,25 +103,41 @@ fi
 # Change directory
 cd $INSTALLS_DIR
 
-# 4. Download IntelliJ IDEA 2.5 if not present and create alias in .bashrc
-if [ ! -d $INSTALLS_DIR/idea-IC-172.4343.14 ]; then
-	wget https://download.jetbrains.com/idea/ideaIC-2017.2.5.tar.gz
-	tar -zxvf ideaIC-2017.2.5.tar.gz
-	rm ideaIC-2017.2.5.tar.gz
+# Download and install Oracle JDK
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install oracle-java8-installer
+
+# Download and install Apache Spark
+if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
+	wget http://apache.rediris.es/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+	tar -zxvf spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+	rm spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
+	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
+	log_success "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7."
+fi
+
+# Download and install Scala
+if [ ! -d scala-$SCALA_VERSION ]; then
+	wget https://downloads.lightbend.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz
+	tar -zxvf scala-$SCALA_VERSION.tgz
+	rm scala-$SCALA_VERSION.tgz
+	ln -sf scala-$SCALA_VERSION scala
+	export SCALA_HOME=$INSTALLS_DIR/scala-$SCALA_VERSION
+fi
+
+# Download IntelliJ IDEA 2.5 if not present
+if [ ! -d idea-IC-172.4343.14 ]; then
+	wget https://download.jetbrains.com/idea/ideaIC-$IDEA_VERSION.tar.gz
+	tar -zxvf ideaIC-$IDEA_VERSION.tar.gz
+	rm ideaIC-$IDEA_VERSION.tar.gz
 	ln -sf idea-IC-172.4343.14 idea
+	export IDEA_HOME=$INSTALLS_DIR/idea-IC-172.4343.14
 	log_success "IntelliJ IDEA downloaded and installed in $INSTALLS_DIR/idea-IC-172.4343.14."
 fi
 
-# 5. Install Apache Spark
-if [ ! -d $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7 ]; then
-	wget http://apache.rediris.es/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz
-	tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
-	rm spark-2.2.0-bin-hadoop2.7.tgz
-	ln -sf spark-2.2.0-bin-hadoop2.7 spark
-	log_success "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-2.2.0-bin-hadoop2.7."
-fi
-
-# 6. Install Scala plugin for IDEA
+# Install Scala plugin for IDEA
 if [ ! -d ./idea/plugins/Scala ]; then
 	cp -r $LIBS_LOCATION/Scala ./idea/plugins
 	log_success "Plugin Scala for IntelliJ IDEA installed succesfully"
@@ -126,7 +146,7 @@ fi
 # Change directory
 cd $DATA_DIR
 
-# 7. Download Audioscrobbler data from desired mirror
+# Download Audioscrobbler data from desired mirror
 for DATA_FILE in "${DATA_FILES[@]}"
 do
 	if [ ! -f $DATA_FILE ]; then
@@ -135,6 +155,6 @@ do
 	fi
 done
 
-# 8. Open IntelliJ IDEA in background
+# Open IntelliJ IDEA in background
 log_success "Opening IntelliJ IDEA development tool."
 $INSTALLS_DIR/idea/bin/idea.sh

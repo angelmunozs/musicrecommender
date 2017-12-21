@@ -106,7 +106,9 @@ cd $INSTALLS_DIR
 # Download and install Oracle JDK
 sudo add-apt-repository ppa:webupd8team/java
 sudo apt-get update
-sudo apt-get install oracle-java8-installer
+sudo apt-get install -y oracle-java8-installer
+export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+log_success "Oracle JDK 8 sucessfully installed in $JAVA_HOME."
 
 # Download and install Apache Spark
 if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
@@ -115,7 +117,7 @@ if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
 	rm spark-$SPARK_VERSION-bin-hadoop2.7.tgz
 	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
 	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
-	log_success "Apache Spark downloaded and installed in $INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7."
+	log_success "Apache Spark downloaded and installed in $SPARK_HOME."
 fi
 
 # Download and install Scala
@@ -125,6 +127,7 @@ if [ ! -d scala-$SCALA_VERSION ]; then
 	rm scala-$SCALA_VERSION.tgz
 	ln -sf scala-$SCALA_VERSION scala
 	export SCALA_HOME=$INSTALLS_DIR/scala-$SCALA_VERSION
+	log_success "Scala downloaded and installed in $SCALA_HOME"
 fi
 
 # Download IntelliJ IDEA 2.5 if not present
@@ -134,13 +137,7 @@ if [ ! -d idea-IC-172.4343.14 ]; then
 	rm ideaIC-$IDEA_VERSION.tar.gz
 	ln -sf idea-IC-172.4343.14 idea
 	export IDEA_HOME=$INSTALLS_DIR/idea-IC-172.4343.14
-	log_success "IntelliJ IDEA downloaded and installed in $INSTALLS_DIR/idea-IC-172.4343.14."
-fi
-
-# Install Scala plugin for IDEA
-if [ ! -d ./idea/plugins/Scala ]; then
-	cp -r $LIBS_LOCATION/Scala ./idea/plugins
-	log_success "Plugin Scala for IntelliJ IDEA installed succesfully"
+	log_success "IntelliJ IDEA downloaded and installed in $IDEA_HOME."
 fi
 
 # Change directory

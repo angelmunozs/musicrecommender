@@ -6,7 +6,7 @@
 
 # Versions to download
 SPARK_VERSION=2.2.0
-SCALA_VERSION=2.12.4
+SCALA_VERSION=2.11.12
 IDEA_VERSION=2017.2.5
 # Name of the project container folder
 PROJECTS_LOCATION=~/www

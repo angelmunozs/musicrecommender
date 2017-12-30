@@ -1,7 +1,4 @@
-#!/bin/bash
-
-# 1. Lanuch spark
+# 1. Lanuch spark from docker-compose.yml
 docker-compose up -d
-
-# 2. Launch sbt
-$SBT_HOME/bin/sbt
+# 2. Launch recommender from custom Dockerfile
+docker build -t musicrecommender .

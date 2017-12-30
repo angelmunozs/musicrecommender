@@ -5,7 +5,7 @@
 # ==============================================================================================================
 
 # Versions to download
-SPARK_VERSION=2.2.0
+SBT_VERSION=1.0.4
 SCALA_VERSION=2.11.12
 IDEA_VERSION=2017.2.5
 # Name of the project container folder
@@ -110,16 +110,6 @@ sudo apt-get install -y oracle-java8-installer
 export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 log_success "Oracle JDK 8 sucessfully installed in $JAVA_HOME."
 
-# Download and install Apache Spark
-if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
-	wget http://apache.rediris.es/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop2.7.tgz
-	tar -zxvf spark-$SPARK_VERSION-bin-hadoop2.7.tgz
-	rm spark-$SPARK_VERSION-bin-hadoop2.7.tgz
-	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
-	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
-	log_success "Apache Spark downloaded and installed in $SPARK_HOME."
-fi
-
 # Download and install Scala
 if [ ! -d scala-$SCALA_VERSION ]; then
 	wget https://downloads.lightbend.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz
@@ -127,6 +117,16 @@ if [ ! -d scala-$SCALA_VERSION ]; then
 	rm scala-$SCALA_VERSION.tgz
 	ln -sf scala-$SCALA_VERSION scala
 	export SCALA_HOME=$INSTALLS_DIR/scala-$SCALA_VERSION
+	log_success "Scala downloaded and installed in $SCALA_HOME"
+fi
+
+# Download and install SBT
+if [ ! -d scala-$SBT_VERSION ]; then
+	wget https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.tgz
+	tar -zxvf sbt-$SBT_VERSION.tgz
+	rm sbt-$SBT_VERSION.tgz
+	ln -sf sbt-$SBT_VERSION sbt
+	export SBT_HOME=$INSTALLS_DIR/sbt-$SBT_VERSION
 	log_success "Scala downloaded and installed in $SCALA_HOME"
 fi
 

@@ -69,5 +69,25 @@ RUN curl -sL --retry 3 \
  && mv /usr/$SPARK_PACKAGE $SPARK_HOME \
  && chown -R root:root $SPARK_HOME
 
-WORKDIR $SPARK_HOME
-CMD ["bin/spark-class", "org.apache.spark.deploy.master.Master"]
+# SCALA
+ENV SCALA_VERSION 2.11.12
+ENV SCALA_HOME=/usr/scala-${SCALA_VERSION}
+ENV PATH $PATH:${SCALA_HOME}/bin
+RUN wget https://downloads.lightbend.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz \
+  | gunzip \
+  | tar x -C /usr/ \
+ && rm -rf $SCALA_HOME/doc \
+ && chown -R root:root $SCALA_HOME
+
+# SBT
+ENV SBT_VERSION 1.0.4
+ENV SBT_HOME=/usr/sbt-${SBT_VERSION}
+ENV PATH $PATH:${SBT_HOME}/bin
+RUN wget https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.tgz \
+  | gunzip \
+  | tar x -C /usr/ \
+ && chown -R root:root $SBT_HOME
+
+# Add dependencies
+ADD data /tmp/data
+ADD src /tmp/src

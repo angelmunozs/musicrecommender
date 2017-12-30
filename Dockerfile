@@ -13,11 +13,11 @@ RUN apt-get update \
 
 # Users with other locales should set this in their derivative image
 ENV LANG es_ES.UTF-8
-ENV LANGUAGE es_ES:en
+ENV LANGUAGE es_ES:es
 ENV LC_ALL es_ES.UTF-8
 
-RUN apt-get update \
- && apt-get install -y curl unzip \
+# Install basic packages
+RUN apt-get install -y curl unzip \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -53,6 +53,7 @@ ENV SPARK_PACKAGE spark-${SPARK_VERSION}-bin-without-hadoop
 ENV SPARK_HOME /usr/spark-${SPARK_VERSION}
 ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/hdfs/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/yarn/lib/*:$HADOOP_HOME/share/hadoop/yarn/*:$HADOOP_HOME/share/hadoop/mapreduce/lib/*:$HADOOP_HOME/share/hadoop/mapreduce/*:$HADOOP_HOME/share/hadoop/tools/lib/*"
 ENV PATH $PATH:${SPARK_HOME}/bin
+ADD conf/general/log4j.properties ${SPARK_HOME}/conf/log4j.properties
 RUN curl -sL --retry 3 \
   "http://d3kbcqa49mib13.cloudfront.net/${SPARK_PACKAGE}.tgz" \
   | gunzip \
@@ -91,7 +92,7 @@ ADD build.sbt ${PROJECT_HOME}/build.sbt
 
 # Create configuration file from which the Scala script will read properties
 ENV PROPS_FILE config.properties
-RUN echo "DATA_HOME=${DATA_HOME}" > ${PROJECT_HOME}/${PROPS_FILE}
+RUN echo "DATA_HOME=${PROJECT_HOME}/data" > ${PROJECT_HOME}/${PROPS_FILE}
 
 # Compile and package with sbt
 WORKDIR ${PROJECT_HOME}
@@ -101,7 +102,6 @@ RUN ls -al ${PROJECT_HOME}/target/scala-${SCALA_SHORT_VERSION}
 
 # Execute recommender with sbt
 ENV JAR_NAME musicrecommender_${SCALA_SHORT_VERSION}-0.1.jar
-ENV SPARK_MASTER_IP 192.168.1.61
 RUN /usr/spark-${SPARK_VERSION}/bin/spark-submit \
   --class RunRecommender \
   --master spark://0.0.0.0:7077 \

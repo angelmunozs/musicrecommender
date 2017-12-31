@@ -33,7 +33,7 @@ class CustomLogger {
   def error(
     msg: String
   ): Unit = {
-    if(logLevel >= 1) {
+    if(level >= 1) {
       newLine()
       println("ERROR: " + msg)
     }
@@ -43,7 +43,7 @@ class CustomLogger {
   def warn(
     msg: String
   ): Unit = {
-    if(logLevel >= 2) {
+    if(level >= 2) {
       newLine()
       println("WARN: " + msg)
     }
@@ -53,7 +53,7 @@ class CustomLogger {
   def info(
     msg: String
   ): Unit = {
-    if(logLevel >= 3) {
+    if(level >= 3) {
       newLine()
       println("INFO: " + msg)
     }
@@ -63,7 +63,7 @@ class CustomLogger {
   def debug(
     msg: String
   ): Unit = {
-    if(logLevel >= 4) {
+    if(level >= 4) {
       newLine()
       println("DEBUG: " + msg)
     }

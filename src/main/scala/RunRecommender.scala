@@ -80,26 +80,7 @@ class RunRecommender(private val spark: SparkSession) {
     val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
 
     val trainData = buildCounts(rawUserArtistData, bArtistAlias).cache()
-
-    val model = new ALS().
-      setSeed(Random.nextLong()).
-      setImplicitPrefs(true).
-      setRank(10).
-      setRegParam(0.01).
-      setAlpha(1.0).
-      setMaxIter(5).
-      setUserCol("user").
-      setItemCol("artist").
-      setRatingCol("count").
-      setPredictionCol("prediction").
-      fit(trainData)
-
     trainData.unpersist()
-
-    if(log.level >=4) {
-      log.debug("Features")
-      model.userFactors.select("features").show(truncate = false)
-    }
 
     val existingArtistIDs = trainData.
       filter($"user" === userID).
@@ -107,9 +88,27 @@ class RunRecommender(private val spark: SparkSession) {
 
     val artistByID = buildArtistByID(rawArtistData)
 
-    if(log.level >=4) {
-      log.debug("Existing artist IDs")
+    if(log.level >=3) {
+      log.debug("Most listened artist by this user")
       artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
+    }
+
+    val model = new ALS().
+    setSeed(Random.nextLong()).
+    setImplicitPrefs(true).
+    setRank(10).
+    setRegParam(0.01).
+    setAlpha(1.0).
+    setMaxIter(5).
+    setUserCol("user").
+    setItemCol("artist").
+    setRatingCol("count").
+    setPredictionCol("prediction").
+    fit(trainData)
+
+    if(log.level >=4) {
+      log.debug("Features")
+      model.userFactors.select("features").show(truncate = false)
     }
 
     val topRecommendations = makeRecommendations(model, userID, numRecommendations)
@@ -146,10 +145,9 @@ class RunRecommender(private val spark: SparkSession) {
     val allArtistIDs = allData.select("artist").as[Int].distinct().collect()
     val bAllArtistIDs = spark.sparkContext.broadcast(allArtistIDs)
 
-    val mostListenedAUC = areaUnderCurve(cvData, bAllArtistIDs, predictMostListened(trainData))
-
     if(log.level >=4) {
       log.debug("Most listened area under curve (AUC)")
+      val mostListenedAUC = areaUnderCurve(cvData, bAllArtistIDs, predictMostListened(trainData))
       println(mostListenedAUC)
     }
 
@@ -161,10 +159,14 @@ class RunRecommender(private val spark: SparkSession) {
           val model = new ALS().
             setSeed(Random.nextLong()).
             setImplicitPrefs(true).
-            setRank(rank).setRegParam(regParam).
-            setAlpha(alpha).setMaxIter(20).
-            setUserCol("user").setItemCol("artist").
-            setRatingCol("count").setPredictionCol("prediction").
+            setRank(rank).
+            setRegParam(regParam).
+            setAlpha(alpha).
+            setMaxIter(20).
+            setUserCol("user").
+            setItemCol("artist").
+            setRatingCol("count").
+            setPredictionCol("prediction").
             fit(trainData)
 
           val auc = areaUnderCurve(cvData, bAllArtistIDs, model.transform)
@@ -198,9 +200,14 @@ class RunRecommender(private val spark: SparkSession) {
     val model = new ALS().
       setSeed(Random.nextLong()).
       setImplicitPrefs(true).
-      setRank(10).setRegParam(1.0).setAlpha(40.0).setMaxIter(20).
-      setUserCol("user").setItemCol("artist").
-      setRatingCol("count").setPredictionCol("prediction").
+      setRank(10).
+      setRegParam(1.0).
+      setAlpha(40.0).
+      setMaxIter(20).
+      setUserCol("user").
+      setItemCol("artist").
+      setRatingCol("count").
+      setPredictionCol("prediction").
       fit(allData)
     allData.unpersist()
 
@@ -208,6 +215,16 @@ class RunRecommender(private val spark: SparkSession) {
 
     val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
     val artistByID = buildArtistByID(rawArtistData)
+
+    if(log.level >=3) {
+      log.debug("Most listened artist by this user")
+      val trainData = buildCounts(rawUserArtistData, bArtistAlias).cache()
+      trainData.unpersist()
+      val existingArtistIDs = trainData.
+        filter($"user" === userID).
+        select("artist").as[Int].collect()
+      artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
+    }
 
     if(log.level >=4) {
       log.debug("Recommendations")

@@ -5,7 +5,7 @@
 # ==============================================================================================================
 
 # Common parameters and functions
-source bin/aux/common.sh
+source bin/common.sh
 
 # ==============================================================================================================
 # Parameters
@@ -15,10 +15,7 @@ source bin/aux/common.sh
 SBT_VERSION=1.0.4
 SCALA_VERSION=2.11.12
 IDEA_VERSION=2017.2.5
-# Name of the project container folder
-PROJECTS_LOCATION=~/www
-# Software installation folder
-INSTALLS_DIR=~/opt
+
 # Data directory
 DATA_DIR=$PROJECTS_LOCATION/musicrecommender/data
 # Libs location

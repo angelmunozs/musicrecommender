@@ -9,19 +9,19 @@ class CustomLogger {
   ): Int = {
     try {
       if(reTypeTitle) {
-        println("Enter " + paramDescription + ":")
+        print("Enter " + paramDescription + ": ")
       }
       scala.io.StdIn.readLine().toInt
     } catch {
       case e: Exception =>
-        println("Please, enter a valid " + paramDescription)
+        print("Please, enter a valid " + paramDescription + ": ")
         ask(paramDescription, false)
     }
   }
 
   // Print a horizontal line
   def line(): Unit = {
-    println("----------------------------------------------------------------------------------")
+    println("====================================================================================================")
   }
 
   // Print a newline character

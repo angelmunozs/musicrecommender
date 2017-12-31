@@ -21,10 +21,10 @@ object RunRecommender {
     val spark = SparkSession.builder().getOrCreate()
 
     // Optional, but may help avoid errors due to long lineage
-    spark.sparkContext.setCheckpointDir("/tmp/")
+    spark.sparkContext.setCheckpointDir("file:///tmp/")
 
     // Parameters
-    val dataHome = "/tmp/data/"
+    val dataHome = "file:///tmp/data/"
     val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
     val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
     val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
@@ -32,7 +32,6 @@ object RunRecommender {
     // Prompt for user ID and no. recommendations via the command line
     log.line()
     val userID = log.ask("user ID (examples: 1000002, 1000029, 1000260...)")
-    log.line()
     val numRecommendations = log.ask("number of recommendations (example: 5)")
     log.line()
 
@@ -78,33 +77,13 @@ class RunRecommender(private val spark: SparkSession) {
   ): Unit = {
 
     val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
-
     val trainData = buildCounts(rawUserArtistData, bArtistAlias).cache()
-    trainData.unpersist()
-
-    val existingArtistIDs = trainData.
-      filter($"user" === userID).
-      select("artist").as[Int].collect()
-
     val artistByID = buildArtistByID(rawArtistData)
 
-    if(log.level >=3) {
-      log.debug("Most listened artist by this user")
-      artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
-    }
+    val model = buildALSModel(10, 0.01, 1.0, 5, trainData)
 
-    val model = new ALS().
-    setSeed(Random.nextLong()).
-    setImplicitPrefs(true).
-    setRank(10).
-    setRegParam(0.01).
-    setAlpha(1.0).
-    setMaxIter(5).
-    setUserCol("user").
-    setItemCol("artist").
-    setRatingCol("count").
-    setPredictionCol("prediction").
-    fit(trainData)
+    trainData.unpersist()
+    showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, trainData)
 
     if(log.level >=4) {
       log.debug("Features")
@@ -156,19 +135,7 @@ class RunRecommender(private val spark: SparkSession) {
            regParam <- Seq(1.0, 0.0001);
            alpha		<- Seq(1.0, 40.0))
         yield {
-          val model = new ALS().
-            setSeed(Random.nextLong()).
-            setImplicitPrefs(true).
-            setRank(rank).
-            setRegParam(regParam).
-            setAlpha(alpha).
-            setMaxIter(20).
-            setUserCol("user").
-            setItemCol("artist").
-            setRatingCol("count").
-            setPredictionCol("prediction").
-            fit(trainData)
-
+          val model = buildALSModel(rank, regParam, alpha, 20, trainData)
           val auc = areaUnderCurve(cvData, bAllArtistIDs, model.transform)
 
           model.userFactors.unpersist()
@@ -197,37 +164,18 @@ class RunRecommender(private val spark: SparkSession) {
 
     val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
     val allData = buildCounts(rawUserArtistData, bArtistAlias).cache()
-    val model = new ALS().
-      setSeed(Random.nextLong()).
-      setImplicitPrefs(true).
-      setRank(10).
-      setRegParam(1.0).
-      setAlpha(40.0).
-      setMaxIter(20).
-      setUserCol("user").
-      setItemCol("artist").
-      setRatingCol("count").
-      setPredictionCol("prediction").
-      fit(allData)
-    allData.unpersist()
-
-    val topRecommendations = makeRecommendations(model, userID, numRecommendations)
-
-    val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
     val artistByID = buildArtistByID(rawArtistData)
 
-    if(log.level >=3) {
-      log.debug("Most listened artist by this user")
-      val trainData = buildCounts(rawUserArtistData, bArtistAlias).cache()
-      trainData.unpersist()
-      val existingArtistIDs = trainData.
-        filter($"user" === userID).
-        select("artist").as[Int].collect()
-      artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
-    }
+    val model = buildALSModel(10, 1.0, 40.0, 20, allData)
 
-    if(log.level >=4) {
-      log.debug("Recommendations")
+    allData.unpersist()
+    showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, allData)
+
+    val topRecommendations = makeRecommendations(model, userID, numRecommendations)
+    val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
+
+    if(log.level >=3) {
+      log.info("Recommendations")
       artistByID.join(spark.createDataset(recommendedArtistIDs).toDF("id"), "id").
         select("name").show()
     }
@@ -379,5 +327,48 @@ class RunRecommender(private val spark: SparkSession) {
     allData.
       join(listenCounts, Seq("artist"), "left_outer").
       select("user", "artist", "prediction")
+  }
+
+  // Show most listened artists for a user
+  def showMostListened(
+    rawUserArtistData: Dataset[String],
+    bArtistAlias: Broadcast[Map[Int,Int]],
+    userID: Int,
+    artistByID: DataFrame,
+    trainData: DataFrame
+  ): Unit = {
+
+    if(log.level >=3) {
+      log.info("Most listened artists by this user")
+
+      val existingArtistIDs = trainData.
+        filter($"user" === userID).
+        select("artist").as[Int].collect()
+      artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
+    }
+  }
+
+  // Build an ALS model
+  def buildALSModel(
+    rank: Int,
+    regParam: Double,
+    alpha: Double,
+    maxIterations: Int,
+    trainData: DataFrame
+  ): ALSModel = {
+
+    val model = new ALS().
+      setSeed(Random.nextLong()).
+      setImplicitPrefs(true).
+      setRank(rank).
+      setRegParam(regParam).
+      setAlpha(alpha).
+      setMaxIter(maxIterations).
+      setUserCol("user").
+      setItemCol("artist").
+      setRatingCol("count").
+      setPredictionCol("prediction").
+      fit(trainData)
+    model
   }
 }

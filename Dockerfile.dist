@@ -90,9 +90,6 @@ ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/co
 # Append Spark binaries to PATH
 ENV PATH $PATH:${SPARK_HOME}/bin
 
-# Add properties for log4j to customize logging level
-ADD conf/general/log4j.properties ${SPARK_HOME}/conf/log4j.properties
-
 # Get Spark from mirror, unpack, move to correct directory and update ownership
 RUN curl -sL --retry 3 \
   "http://d3kbcqa49mib13.cloudfront.net/${SPARK_PACKAGE}.tgz" \
@@ -155,6 +152,8 @@ ADD project ${PROJECT_HOME}/project
 ADD src ${PROJECT_HOME}/src
 # Copy SBT build properties for compilation
 ADD build.sbt ${PROJECT_HOME}/build.sbt
+# Add properties for log4j to customize logging level
+ADD conf/general/log4j.properties ${SPARK_HOME}/conf/log4j.properties
 
 # Create configuration file from which the Scala script will read properties
 ENV PROPS_FILE config.properties
@@ -169,5 +168,5 @@ RUN sbt package
 ENV JAR_NAME musicrecommender_${SCALA_SHORT_VERSION}-0.1.jar
 RUN /usr/spark-${SPARK_VERSION}/bin/spark-submit \
   --class RunRecommender \
-  --master spark://0.0.0.0:7077 \
+  --master spark://%MASTER_IP%:7077 \
   ${PROJECT_HOME}/target/scala-${SCALA_SHORT_VERSION}/${JAR_NAME}

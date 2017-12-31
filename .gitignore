@@ -6,3 +6,4 @@ target
 src
 tmp
 config.properties
+Dockerfile

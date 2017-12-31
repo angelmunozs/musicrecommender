@@ -3,7 +3,6 @@ data/*.txt
 .idea
 *.iml
 target
-src
 tmp
 config.properties
 Dockerfile

@@ -141,8 +141,8 @@ RUN curl -sL --retry 3 \
 # Add project files
 # ======================================================================================================================
 
-# Set PROJECT_HOMR environment variable
-ENV PROJECT_HOME /tmp/musicrecommender
+# Set PROJECT_HOME environment variable
+ENV PROJECT_HOME /tmp
 
 # Copy Audioscrobbler data
 ADD data ${PROJECT_HOME}/data

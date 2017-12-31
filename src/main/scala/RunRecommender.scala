@@ -30,10 +30,9 @@ object RunRecommender {
     val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
 
     // Prompt for user ID and no. recommendations via the command line
-    log.line()
     val userID = log.ask("user ID (examples: 1000002, 1000029, 1000260...)")
     val numRecommendations = log.ask("number of recommendations (example: 5)")
-    log.line()
+    log.newLine()
 
     // Create new recommender
     val runRecommender = new RunRecommender(spark)

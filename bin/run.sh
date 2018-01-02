@@ -23,42 +23,50 @@ print_usage () {
     exit 1
 }
 
-# Run locally
-run_local () {
-    # 1. Launch spark from docker-compose.yml
-    log_info "Initializing Spark from docker-compose.yml"
-    spark_init
-    # 2. Compile code with SBT
+# Compile and package code
+generate_jar () {
+    # Compile code with SBT
     log_info "Compiling recommender code"
     $INSTALLS_DIR/sbt/bin/sbt compile
-    # 3. Create JAR with SBT
+    # Create JAR with SBT
     log_info "Packaging compiled recommender code"
     $INSTALLS_DIR/sbt/bin/sbt package
-    # 4. Launch recommender with spark-submit after copying data to /tmp/data
-    cp -r data /tmp &>/dev/null
+}
+
+# Run locally
+run_local () {
+    # 1. Compile and pack with SBT
+    generate_jar
+    # 2. Launch recommender with spark-submit after copying data to /tmp/data
     log_info "Executing recommender with spark-submit"
     $INSTALLS_DIR/spark/bin/spark-submit \
     --class "RunRecommender" \
-    --master "spark://$(get_master_ip):7077" \
+    --master "local[*]" \
+    --executor-memory 4G \
+    --total-executor-cores 4 \
     ./target/scala-2.11/musicrecommender_2.11-0.1.jar
 }
 
 # Run locally
 run_docker () {
     # 1. Launch spark from docker-compose.yml
-    log_info "Initializing Spark from docker-compose.yml"
     spark_init
-    # 2. Generate Dockerfile with master IP
-    cp Dockerfile.dist Dockerfile
-    find Dockerfile -type f -exec sed -i s/%MASTER_IP%/$(get_master_ip)/g {} \;
-    # 3. Launch recommender from custom Dockerfile
-    log_info "Building Docker container that executes the code"
-    docker build -t musicrecommender .
+    # 2. Compile and pack with SBT
+    generate_jar
+    # 3. Launch recommender with spark-submit after copying data to /tmp/data
+    log_info "Executing recommender with spark-submit"
+    $INSTALLS_DIR/spark/bin/spark-submit \
+    --class "RunRecommender" \
+    --master "spark://$(get_master_ip):7077" \
+    --executor-memory 4G \
+    --total-executor-cores 4 \
+    ./target/scala-2.11/musicrecommender_2.11-0.1.jar
 }
 
 # Launch Spark master and workers
 spark_init () {
     # Launch spark from docker-compose.yml
+    log_info "Initializing Spark from docker-compose.yml"
     docker-compose up -d
 }
 

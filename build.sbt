@@ -2,6 +2,9 @@ name := "musicrecommender"
 version := "0.1"
 scalaVersion := "2.11.12"
 
+// Options
+connectInput in run := true
+
 // Dependencies
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.12"
 libraryDependencies += "org.scala-lang" % "scalap" % "2.11.12"

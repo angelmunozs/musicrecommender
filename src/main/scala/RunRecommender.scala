@@ -24,7 +24,7 @@ object RunRecommender {
     spark.sparkContext.setCheckpointDir("file:///tmp/")
 
     // Parameters
-    val dataHome = "file:///tmp/data/"
+    val dataHome = "hdfs://172.17.0.3:9000/tmp/data/"
     val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
     val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
     val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")

@@ -11,7 +11,7 @@ class CustomLogger {
       if(reTypeTitle) {
         print("Enter " + paramDescription + ": ")
       }
-      scala.io.StdIn.readLine().toInt
+      scala.io.StdIn.readInt()
     } catch {
       case e: Exception =>
         print("Please, enter a valid " + paramDescription + ": ")
@@ -34,7 +34,6 @@ class CustomLogger {
     msg: String
   ): Unit = {
     if(level >= 1) {
-      newLine()
       println("ERROR: " + msg)
     }
   }
@@ -44,7 +43,6 @@ class CustomLogger {
     msg: String
   ): Unit = {
     if(level >= 2) {
-      newLine()
       println("WARN: " + msg)
     }
   }
@@ -54,7 +52,6 @@ class CustomLogger {
     msg: String
   ): Unit = {
     if(level >= 3) {
-      newLine()
       println("INFO: " + msg)
     }
   }
@@ -64,7 +61,6 @@ class CustomLogger {
     msg: String
   ): Unit = {
     if(level >= 4) {
-      newLine()
       println("DEBUG: " + msg)
     }
   }

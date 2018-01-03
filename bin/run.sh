@@ -18,16 +18,20 @@ print_usage () {
     echo " ./bin/run.sh \${ENVIRONMENT}"
     echo "Parameters: "
     echo " - \${ENVIRONMENT}: desired environment (\"local\" or \"docker\")"
+    echo " - \${OPTIONS}:     options (\"--no-compile\")."
     echo "Examples: "
     echo " ./bin/run.sh local"
     echo " ./bin/run.sh docker"
+    echo " ./bin/run.sh docker --no-compile"
     exit 1
 }
 
 # Run locally
+# Parameters:
+# - $1: Options. Possible values: --no-compile (to avoid compiling code again).
 run_local () {
     # 1. Compile and pack with SBT
-    generate_jar
+    generate_jar $1
     # 2. Generate env.properties file
     generate_properties "file:///home/angel/www/musicrecommender/data"
     # 3. Launch recommender with spark-submit after copying data to /tmp/data
@@ -35,15 +39,17 @@ run_local () {
 }
 
 # Run locally
+# Parameters:
+# - $1: Options. Possible values: --no-compile (to avoid compiling code again).
 run_docker () {
     # 1. Launch spark from docker-compose.yml
     spark_init_docker
     # 2. Compile and pack with SBT
-    generate_jar
+    generate_jar $1
     # 3. Generate env.properties file
-    generate_properties "file:///tmp/data"
+    generate_properties "hdfs://$(get_ip musicrecommender_worker_1):9000/tmp/data"
     # 4. Launch recommender with spark-submit after copying data to /tmp/data
-    execute_jar "spark://$(get_master_ip):7077"
+    execute_jar "spark://$(get_ip musicrecommender_master_1):7077"
 }
 
 # Execute JAR with spark-submit
@@ -66,13 +72,17 @@ generate_properties () {
 }
 
 # Compile and package code
+# Parameters:
+# - $1: Options. Possible values: --no-compile (to avoid compiling code again).
 generate_jar () {
-    # Compile code with SBT
-    log_info "Compiling recommender code"
-    $INSTALLS_DIR/sbt/bin/sbt compile
-    # Create JAR with SBT
-    log_info "Packaging compiled recommender code"
-    $INSTALLS_DIR/sbt/bin/sbt package
+    if [ "$1" != "--no-compile" ]; then
+        # Compile code with SBT
+        log_info "Compiling recommender code"
+        $INSTALLS_DIR/sbt/bin/sbt compile
+        # Create JAR with SBT
+        log_info "Packaging compiled recommender code"
+        $INSTALLS_DIR/sbt/bin/sbt package
+    fi
 }
 
 # Launch Spark master and workers
@@ -82,9 +92,9 @@ spark_init_docker () {
     docker-compose up -d
 }
 
-# Get Spark master IP
-get_master_ip () {
-    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' musicrecommender_master_1
+# Get the IP of a docker container
+get_ip () {
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $1
 }
 
 # ==============================================================================================================
@@ -92,20 +102,32 @@ get_master_ip () {
 # ==============================================================================================================
 
 # Execution depending on parameters
+# Parameters:
+# - $1: Environment. Possible values: local, docker.
+# - $2: Optional. Possible values: --no-compile (to avoid compiling code again).
+
+# Exit if no first parameter
 if [ -z $1 ]; then
     log_error "No environment selected"
     print_usage
-else
-    case "$1" in
-        local)
-            run_local
-        ;;
-        docker)
-            run_docker
-        ;;
-        *)
-            log_error "Unknown environment \"$1\""
-            print_usage
-        ;;
-    esac
 fi
+
+# Exit if unknown option
+if [ ! -z $2 ] && [ "$2" != "--no-compile" ]; then
+    log_error "Unknown option \"$2\""
+    print_usage
+fi
+
+# Main functionality
+case "$1" in
+    local)
+        run_local $2
+    ;;
+    docker)
+        run_docker $2
+    ;;
+    *)
+        log_error "Unknown environment \"$1\""
+        print_usage
+    ;;
+esac

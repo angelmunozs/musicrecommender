@@ -75,14 +75,6 @@ execute_jar_in_master () {
     /tmp/target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1 $2
 }
 
-# Generate conf/general/env.properties file
-generate_properties () {
-    # 1. Create directory conf/geeral if not existing
-    mkdir -p conf/general
-    # 2. Echo content to file conf/general/env.properties
-    echo "DATA_HOME=$1" > conf/general/env.properties
-}
-
 # Compile and package code
 # Parameters:
 # - $1: Options. Possible values: --no-compile (to avoid compiling code again).

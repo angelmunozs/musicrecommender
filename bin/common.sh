@@ -1,11 +1,25 @@
+#!/bin/bash
 # ==============================================================================================================
 # Common parameters
 # ==============================================================================================================
+
+# Project parameters
+PROJECT_NAME=musicrecommender
+PROJECT_VERSION=1.0
+
+# Software parameters
+SCALA_SHORT_VERSION=2.11
+SCALA_VERSION=$SCALA_SHORT_VERSION.12
+SPARK_VERSION=2.2.0
+SBT_VERSION=1.0.4
+IDEA_VERSION=2017.2.5
 
 # Name of the project container folder
 PROJECTS_LOCATION=~/www
 # Software installation folder
 INSTALLS_DIR=/opt
+# Where the local data is stored
+LOCAL_DATA_DIR=$PROJECTS_LOCATION/$PROJECT_NAME/data
 
 # Colors
 RED='\033[0;31m'
@@ -17,6 +31,25 @@ NC='\033[0m' # No Color
 ICON_SUCCESS="$GREEN""✔""$NC"
 ICON_ERROR="$RED""✖""$NC"
 ICON_INFO="$YELLOW""ℹ""️$NC"
+
+# ==============================================================================================================
+# Regenerate build.sbt
+# ==============================================================================================================
+
+echo "name := \"$PROJECT_NAME\"" > build.sbt
+echo "version := \"$PROJECT_VERSION\"" >> build.sbt
+echo "scalaVersion := \"$SCALA_VERSION\"" >> build.sbt
+echo "" >> build.sbt
+echo "// Options" >> build.sbt
+echo "connectInput in run := true" >> build.sbt
+echo "" >> build.sbt
+echo "// Dependencies" >> build.sbt
+echo "libraryDependencies += \"org.scala-lang\" % \"scala-library\" % \"$SCALA_VERSION\"" >> build.sbt
+echo "libraryDependencies += \"org.scala-lang\" % \"scalap\" % \"$SCALA_VERSION\"" >> build.sbt
+echo "libraryDependencies += \"org.scala-lang\" % \"scala-compiler\" % \"$SCALA_VERSION\"" >> build.sbt
+echo "libraryDependencies += \"org.apache.spark\" %% \"spark-core\" % \"$SPARK_VERSION\"" >> build.sbt
+echo "libraryDependencies += \"org.apache.spark\" %% \"spark-mllib\" % \"$SPARK_VERSION\"" >> build.sbt
+echo "libraryDependencies += \"org.apache.spark\" %% \"spark-sql\" % \"$SPARK_VERSION\"" >> build.sbt
 
 # ==============================================================================================================
 # Common functions

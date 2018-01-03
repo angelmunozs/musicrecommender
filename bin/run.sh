@@ -37,11 +37,11 @@ run_local () {
 # Run locally
 run_docker () {
     # 1. Launch spark from docker-compose.yml
-    spark_init
+    spark_init_docker
     # 2. Compile and pack with SBT
     generate_jar
     # 3. Generate env.properties file
-    generate_properties "file:///home/angel/www/musicrecommender/data"
+    generate_properties "file:///tmp/data"
     # 4. Launch recommender with spark-submit after copying data to /tmp/data
     execute_jar "spark://$(get_master_ip):7077"
 }
@@ -54,7 +54,7 @@ execute_jar () {
     --master "$1" \
     --executor-memory 8G \
     --total-executor-cores 4 \
-    ./target/scala-2.11/musicrecommender_2.11-0.1.jar
+    ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar
 }
 
 # Generate conf/general/env.properties file
@@ -76,7 +76,7 @@ generate_jar () {
 }
 
 # Launch Spark master and workers
-spark_init () {
+spark_init_docker () {
     # Launch spark from docker-compose.yml
     log_info "Initializing Spark from docker-compose.yml"
     docker-compose up -d

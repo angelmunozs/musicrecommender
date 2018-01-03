@@ -50,31 +50,40 @@ object RunRecommender {
     runRecommender: RunRecommender
   ): Unit = {
 
-    val action = log.askString("action:\n"+
+    println("List of actions:\n"+
       " [1] Make recommendation\n"+
-      " [2] Show statistics\n" +
-      " [3] Search artist\n"+
-      " [4] Evaluate recommendation\n"+
+      " [2] Show most listened\n"+
+      " [3] Show statistics\n" +
+      " [4] Search artist\n"+
+      " [5] Evaluate recommendation\n"+
       " [q] Exit\n")
-    log.newLine()
+    val action = log.askString("action (examples: 1, 2, 3, 4, q)")
 
     action match {
       case "1" =>
         // Prompt for user ID and no. recommendations via the command line
-        val userID = log.askInt("user ID (examples: 1000002, 1000029, 1000260...): ")
-        val numRecommendations = log.askInt("number of recommendations (example: 5): ")
+        val userID = log.askInt("user ID (examples: 1000002, 1000029...)")
+        val numRecommendations = log.askInt("number of recommendations (example: 5)")
         log.newLine()
         runRecommender.recommend(rawUserArtistData, rawArtistData, rawArtistAlias, userID, numRecommendations)
       case "2" =>
-        runRecommender.showStatistics(rawUserArtistData, rawArtistData, rawArtistAlias)
+        // Prompt for user ID via the command line
+        val userID = log.askInt("user ID (examples: 1000002, 1000029...)")
+        log.newLine()
+        runRecommender.showMostListenedRaw(rawUserArtistData, rawArtistData, rawArtistAlias, userID)
       case "3" =>
+        log.newLine()
+        runRecommender.showStatistics(rawUserArtistData, rawArtistData, rawArtistAlias)
+      case "4" =>
         // Prompt for search string
-        val searchContent = log.askString("artist name (example: System Of A Down): ")
+        val searchContent = log.askString("artist name (example: Black Sabbath)")
         log.newLine()
         runRecommender.searchArtist(searchContent, rawArtistData, rawArtistAlias)
-      case "4" =>
+      case "5" =>
+        log.newLine()
         runRecommender.evaluate(rawUserArtistData, rawArtistAlias)
       case "q" =>
+        println("Bye")
         System.exit(0)
       case _ =>
         log.error("Unknown action \"" + action + "\"")
@@ -105,7 +114,7 @@ class RunRecommender(private val spark: SparkSession) {
     rawArtistAlias: Dataset[String]
   ): Unit = {
 
-    log.info("Search results")
+    log.result("Search results")
 
     val artistByID = buildArtistByID(rawArtistData)
     artistByID.filter($"name".contains(searchContent)).show()
@@ -120,7 +129,7 @@ class RunRecommender(private val spark: SparkSession) {
     rawArtistAlias: Dataset[String]
   ): Unit = {
 
-    log.info("Ststistics of the data")
+    log.result("Ststistics of the data")
 
     val userArtistDF = rawUserArtistData.map { line =>
       val Array(user, artist, _*) = line.split(' ')
@@ -146,24 +155,21 @@ class RunRecommender(private val spark: SparkSession) {
     val allArtistIDs = allData.select("artist").as[Int].distinct().collect()
     val bAllArtistIDs = spark.sparkContext.broadcast(allArtistIDs)
 
-    val mostListenedAUC = areaUnderCurve(cvData, bAllArtistIDs, predictMostListened(trainData))
-    log.info("Most listened area under curve (AUC): " + mostListenedAUC)
-
     val evaluations =
-      for (rank		  <- Seq(5,	30);
+      for (rank		  <- Seq(5,	10, 20, 30);
            regParam <- Seq(1.0, 0.0001);
            alpha		<- Seq(1.0, 40.0))
-        yield {
-          val model = buildALSModel(rank, regParam, alpha, 20, trainData)
-          val auc = areaUnderCurve(cvData, bAllArtistIDs, model.transform)
+      yield {
+        val model = buildALSModel(rank, regParam, alpha, 20, trainData)
+        val auc = areaUnderCurve(cvData, bAllArtistIDs, model.transform)
 
-          model.userFactors.unpersist()
-          model.itemFactors.unpersist()
+        model.userFactors.unpersist()
+        model.itemFactors.unpersist()
 
-          (auc, (rank, regParam, alpha))
-        }
+        (auc, (rank, regParam, alpha))
+      }
 
-    log.info("Evaluations")
+    log.result("Evaluations")
     evaluations.sorted.reverse.foreach(println)
 
     trainData.unpersist()
@@ -183,7 +189,7 @@ class RunRecommender(private val spark: SparkSession) {
     val allData = buildCounts(rawUserArtistData, bArtistAlias).cache()
     val artistByID = buildArtistByID(rawArtistData)
 
-    val model = buildALSModel(30, 1.0, 40.0, 20, allData)
+    val model = buildALSModel(20, 1.0, 40.0, 20, allData)
 
     allData.unpersist()
     showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, allData)
@@ -191,7 +197,7 @@ class RunRecommender(private val spark: SparkSession) {
     val topRecommendations = makeRecommendations(model, userID, numRecommendations)
     val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
 
-    log.info("Recommendations")
+    log.result("Recommendations")
     artistByID.join(spark.createDataset(recommendedArtistIDs).toDF("id"), "id").
       select("name").show()
 
@@ -214,7 +220,9 @@ class RunRecommender(private val spark: SparkSession) {
           case _: NumberFormatException => None
         }
       }
-    }.toDF("id", "name")
+    }.
+    toDF("id", "name").
+    filter(!$"name".isin("Unknown", "unknown", "[unknown]"))
   }
 
   def buildArtistAlias(
@@ -353,14 +361,27 @@ class RunRecommender(private val spark: SparkSession) {
     trainData: DataFrame
   ): Unit = {
 
-    if(log.level >=3) {
-      log.info("Most listened artists by this user")
+    log.result("Most listened artists by this user")
+    val existingArtistIDs = trainData.
+      filter($"user" === userID).
+      sort(desc("count")).
+      select("artist").
+      as[Int].
+      collect()
+    artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
+  }
 
-      val existingArtistIDs = trainData.
-        filter($"user" === userID).
-        select("artist").as[Int].collect()
-      artistByID.filter($"id" isin (existingArtistIDs: _*)).show()
-    }
+  // Show most listened artists for a user (raw)
+  def showMostListenedRaw(
+    rawUserArtistData: Dataset[String],
+    rawArtistData: Dataset[String],
+    rawArtistAlias: Dataset[String],
+    userID: Int
+  ): Unit = {
+    val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
+    val allData = buildCounts(rawUserArtistData, bArtistAlias).cache()
+    val artistByID = buildArtistByID(rawArtistData)
+    showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, allData)
   }
 
   // Build an ALS model

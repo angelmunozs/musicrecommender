@@ -22,7 +22,6 @@ master:
     - 8080:8080
   volumes:
     - ./conf/master:/conf
-    - ./data:/tmp/data
 
 worker:
   image: gettyimages/spark

@@ -9,12 +9,12 @@ class CustomLogger {
   ): Int = {
     try {
       if(reTypeTitle) {
-        print("Enter " + paramDescription)
+        print("Enter " + paramDescription + ": ")
       }
       scala.io.StdIn.readInt()
     } catch {
       case e: Exception =>
-        print("Please, enter a valid " + paramDescription)
+        print("Please, enter a valid " + paramDescription + ": ")
         askInt(paramDescription, false)
     }
   }
@@ -26,12 +26,12 @@ class CustomLogger {
   ): String = {
     try {
       if(reTypeTitle) {
-        print("Enter " + paramDescription)
+        print("Enter " + paramDescription + ": ")
       }
       scala.io.StdIn.readLine()
     } catch {
       case e: Exception =>
-        print("Please, enter a valid " + paramDescription)
+        print("Please, enter a valid " + paramDescription + ": ")
         askString(paramDescription, false)
     }
   }
@@ -82,4 +82,10 @@ class CustomLogger {
     }
   }
 
+  // Log results (always)
+  def result(
+    msg: String
+  ): Unit = {
+    println("INFO: " + msg)
+  }
 }

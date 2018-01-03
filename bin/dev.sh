@@ -12,16 +12,6 @@ source bin/common.sh
 # Parameters
 # ==============================================================================================================
 
-# Versions to download
-SPARK_VERSION=2.2.0
-SBT_VERSION=1.0.4
-SCALA_VERSION=2.11.12
-IDEA_VERSION=2017.2.5
-
-# Data directory
-DATA_DIR=$PROJECTS_LOCATION/musicrecommender/data
-# Libs location
-LIBS_LOCATION=$PROJECTS_LOCATION/musicrecommender/libs
 # Data mirror
 DATA_MIRROR=http://samplecleaner.com
 # Data files
@@ -51,14 +41,14 @@ fi
 cd $PROJECTS_LOCATION
 
 # Download custom project (or git pull if present)
-if [ ! -d musicrecommender ]; then
-	git clone https://github.com/angelmunozs/musicrecommender
-	log_success "Code for musicrecommender from @angelmunozs copied to $PROJECTS_LOCATION/musicrecommender."
+if [ ! -d $PROJETC_NAME ]; then
+	git clone https://github.com/angelmunozs/$PROJETC_NAME
+	log_success "Code for $PROJETC_NAME from @angelmunozs copied to $PROJECTS_LOCATION/$PROJETC_NAME."
 else
-	cd musicrecommender
+	cd $PROJETC_NAME
 	git pull
 	cd ..
-	log_success "Code for musicrecommender from @angelmunozs in $PROJECTS_LOCATION/musicrecommender updated."
+	log_success "Code for $PROJETC_NAME from @angelmunozs in $PROJECTS_LOCATION/$PROJETC_NAME updated."
 fi
 
 # Change directory
@@ -117,14 +107,14 @@ if [ ! -d idea-IC-172.4343.14 ]; then
 fi
 
 # Change directory
-cd $DATA_DIR
+cd $LOCAL_DATA_DIR
 
 # Download Audioscrobbler data from desired mirror
 for DATA_FILE in "${DATA_FILES[@]}"
 do
 	if [ ! -f $DATA_FILE ]; then
 		wget $DATA_MIRROR/$DATA_FILE
-		log_success "Downloaded file $DATA_FILE into $DATA_DIR"
+		log_success "Downloaded file $DATA_FILE into $LOCAL_DATA_DIR"
 	fi
 done
 

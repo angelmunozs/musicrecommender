@@ -22,6 +22,8 @@ master:
     - 8080:8080
   volumes:
     - ./conf/master:/conf
+    - ./target:/tmp/target
+    - ./conf/general/env.properties:/tmp/env.properties
 
 worker:
   image: gettyimages/spark

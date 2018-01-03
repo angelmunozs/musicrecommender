@@ -32,10 +32,8 @@ print_usage () {
 run_local () {
     # 1. Compile and pack with SBT
     generate_jar $1
-    # 2. Generate env.properties file
-    generate_properties "file:///home/angel/www/musicrecommender/data"
-    # 3. Launch recommender with spark-submit after copying data to /tmp/data
-    execute_jar "local[*]"
+    # 2. Launch recommender with spark-submit after copying data to /tmp/data
+    execute_jar_locally "file:///tmp/" "file:///home/angel/www/musicrecommender/data"
 }
 
 # Run locally
@@ -46,21 +44,35 @@ run_docker () {
     spark_init_docker
     # 2. Compile and pack with SBT
     generate_jar $1
-    # 3. Generate env.properties file
-    generate_properties "hdfs://$(get_ip musicrecommender_worker_1):9000/tmp/data"
-    # 4. Launch recommender with spark-submit after copying data to /tmp/data
-    execute_jar "spark://$(get_ip musicrecommender_master_1):7077"
+    # 3. Launch recommender with spark-submit after copying data to /tmp/data
+    execute_jar_in_master "file:///tmp/" "file:///tmp/data"
 }
 
 # Execute JAR with spark-submit
-execute_jar () {
-    log_info "Executing recommender with spark-submit"
+# Parameters:
+# - $1: Spark checkpoint directory, to be read by main JAR.
+# - $2: Data home, to be read by main JAR.
+execute_jar_locally () {
+    log_info "Executing recommender locally with spark-submit"
     $INSTALLS_DIR/spark/bin/spark-submit \
     --class "RunRecommender" \
-    --master "$1" \
+    --master "local[*]" \
     --executor-memory 8G \
     --total-executor-cores 4 \
-    ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar
+    ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1 $2
+}
+
+# Execute JAR in Spark master
+# Parameters:
+# - $1: Spark checkpoint directory, to be read by main JAR.
+# - $2: Data home, to be read by main JAR.
+execute_jar_in_master () {
+    log_info "Executing recommender in Spark master with spark-submit"
+    docker exec -it musicrecommender_master_1 bin/spark-submit \
+    --class "RunRecommender" \
+    --executor-memory 8G \
+    --total-executor-cores 4 \
+    /tmp/target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1 $2
 }
 
 # Generate conf/general/env.properties file

@@ -12,35 +12,39 @@ import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 
-// Import Java properties
-import java.util.Properties
-import java.io.FileInputStream
-
 object RunRecommender {
 
   // Import and declare utils
   val log = new CustomLogger()
 
+  // Parameters:
+  // - args(0): Route to Spark checkpoint directory.
+  // - args(1): Route to data files.
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().getOrCreate()
 
-    // Optional, but may help avoid errors due to long lineage
-    spark.sparkContext.setCheckpointDir("file:///tmp/")
+    try {
+      // Optional, but may help avoid errors due to long lineage
+      spark.sparkContext.setCheckpointDir(args(0))
 
-    // Load project properties
-    val currentProps = loadProperties("conf/general/env.properties")
+      // Parameters
+      val dataHome = args(1) + "/"
+      val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
+      val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
+      val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
 
-    // Parameters
-    val dataHome = currentProps.getProperty("DATA_HOME") + "/"
-    val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
-    val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
-    val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
+      // Create new recommender
+      val runRecommender = new RunRecommender(spark)
 
-    // Create new recommender
-    val runRecommender = new RunRecommender(spark)
-
-    // Prompt for user ID and no. recommendations via the command line
-    askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
+      // Prompt for user ID and no. recommendations via the command line
+      askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
+    }
+    catch {
+      case e: Exception =>
+        e.printStackTrace()
+        log.error("Wrong first parameter: data home.")
+        System.exit(1)
+    }
   }
 
   def askAction(
@@ -89,14 +93,6 @@ object RunRecommender {
         log.error("Unknown action \"" + action + "\"")
     }
     askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
-  }
-
-  // Load propreties from Java properties file
-  def loadProperties(fileName: String): Properties = {
-    val props = new Properties()
-    val propsFile = new FileInputStream(fileName)
-    props.load(propsFile)
-    props
   }
 }
 

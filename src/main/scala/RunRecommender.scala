@@ -12,6 +12,10 @@ import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
 
+// Import Java properties
+import java.util.Properties
+import java.io.FileInputStream
+
 object RunRecommender {
 
   // Import and declare utils
@@ -23,22 +27,67 @@ object RunRecommender {
     // Optional, but may help avoid errors due to long lineage
     spark.sparkContext.setCheckpointDir("file:///tmp/")
 
+    // Load project properties
+    val currentProps = loadProperties("conf/general/env.properties")
+
     // Parameters
-    val dataHome = "hdfs://172.17.0.3:9000/tmp/data/"
+    val dataHome = currentProps.getProperty("DATA_HOME") + "/"
     val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
     val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
     val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
 
-    // Prompt for user ID and no. recommendations via the command line
-    val userID = log.ask("user ID (examples: 1000002, 1000029, 1000260...)")
-    val numRecommendations = log.ask("number of recommendations (example: 5)")
-    log.newLine()
-
     // Create new recommender
     val runRecommender = new RunRecommender(spark)
 
-    // Perform recommendation
-    runRecommender.recommend(rawUserArtistData, rawArtistData, rawArtistAlias, userID, numRecommendations)
+    // Prompt for user ID and no. recommendations via the command line
+    askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
+  }
+
+  def askAction(
+    rawUserArtistData: Dataset[String],
+    rawArtistData: Dataset[String],
+    rawArtistAlias: Dataset[String],
+    runRecommender: RunRecommender
+  ): Unit = {
+
+    val action = log.askString("action:\n"+
+      " [1] Make recommendation\n"+
+      " [2] Show statistics\n" +
+      " [3] Search artist\n"+
+      " [4] Evaluate recommendation\n"+
+      " [q] Exit\n")
+    log.newLine()
+
+    action match {
+      case "1" =>
+        // Prompt for user ID and no. recommendations via the command line
+        val userID = log.askInt("user ID (examples: 1000002, 1000029, 1000260...): ")
+        val numRecommendations = log.askInt("number of recommendations (example: 5): ")
+        log.newLine()
+        runRecommender.recommend(rawUserArtistData, rawArtistData, rawArtistAlias, userID, numRecommendations)
+      case "2" =>
+        runRecommender.showStatistics(rawUserArtistData, rawArtistData, rawArtistAlias)
+      case "3" =>
+        // Prompt for search string
+        val searchContent = log.askString("artist name (example: System Of A Down): ")
+        log.newLine()
+        runRecommender.searchArtist(searchContent, rawArtistData, rawArtistAlias)
+      case "4" =>
+        runRecommender.evaluate(rawUserArtistData, rawArtistAlias)
+      case "q" =>
+        System.exit(0)
+      case _ =>
+        log.error("Unknown action \"" + action + "\"")
+    }
+    askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
+  }
+
+  // Load propreties from Java properties file
+  def loadProperties(fileName: String): Properties = {
+    val props = new Properties()
+    val propsFile = new FileInputStream(fileName)
+    props.load(propsFile)
+    props
   }
 }
 
@@ -49,62 +98,36 @@ class RunRecommender(private val spark: SparkSession) {
   // Import and declare utils
   val log = new CustomLogger()
 
-  // Prepare data for processing
-  def preparation(
+  // Seacrh artist in artists dataset and return real alias
+  def searchArtist(
+    searchContent: String,
+    rawArtistData: Dataset[String],
+    rawArtistAlias: Dataset[String]
+  ): Unit = {
+
+    log.info("Search results")
+
+    val artistByID = buildArtistByID(rawArtistData)
+    artistByID.filter($"name".contains(searchContent)).show()
+
+    val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
+  }
+
+  // Show dataset statistics
+  def showStatistics(
     rawUserArtistData: Dataset[String],
     rawArtistData: Dataset[String],
     rawArtistAlias: Dataset[String]
   ): Unit = {
 
-    if(log.level >=4) {
-      val userArtistDF = rawUserArtistData.map { line =>
-        val Array(user, artist, _*) = line.split(' ')
-        (user.toInt, artist.toInt)
-      }.toDF("user", "artist")
-      log.debug("Satistics of the data")
-      userArtistDF.agg(min("user"), max("user"), min("artist"), max("artist")).show()
-    }
-  }
+    log.info("Ststistics of the data")
 
-  // Make data model
-  def model(
-    rawUserArtistData: Dataset[String],
-    rawArtistData: Dataset[String],
-    rawArtistAlias: Dataset[String],
-    userID: Int,
-    numRecommendations: Int
-  ): Unit = {
+    val userArtistDF = rawUserArtistData.map { line =>
+      val Array(user, artist, _*) = line.split(' ')
+      (user.toInt, artist.toInt)
+    }.toDF("user", "artist")
 
-    val bArtistAlias = spark.sparkContext.broadcast(buildArtistAlias(rawArtistAlias))
-    val trainData = buildCounts(rawUserArtistData, bArtistAlias).cache()
-    val artistByID = buildArtistByID(rawArtistData)
-
-    val model = buildALSModel(10, 0.01, 1.0, 5, trainData)
-
-    trainData.unpersist()
-    showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, trainData)
-
-    if(log.level >=4) {
-      log.debug("Features")
-      model.userFactors.select("features").show(truncate = false)
-    }
-
-    val topRecommendations = makeRecommendations(model, userID, numRecommendations)
-
-    if(log.level >=4) {
-      log.debug("Quality of the recommendations")
-      topRecommendations.show()
-    }
-
-    val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
-
-    if(log.level >=3) {
-      log.info("Recommended artists")
-      artistByID.filter($"id" isin (recommendedArtistIDs: _*)).show()
-    }
-
-    model.userFactors.unpersist()
-    model.itemFactors.unpersist()
+    userArtistDF.agg(min("user"), max("user"), min("artist"), max("artist")).show()
   }
 
   // Evaluate data
@@ -123,11 +146,8 @@ class RunRecommender(private val spark: SparkSession) {
     val allArtistIDs = allData.select("artist").as[Int].distinct().collect()
     val bAllArtistIDs = spark.sparkContext.broadcast(allArtistIDs)
 
-    if(log.level >=4) {
-      log.debug("Most listened area under curve (AUC)")
-      val mostListenedAUC = areaUnderCurve(cvData, bAllArtistIDs, predictMostListened(trainData))
-      println(mostListenedAUC)
-    }
+    val mostListenedAUC = areaUnderCurve(cvData, bAllArtistIDs, predictMostListened(trainData))
+    log.info("Most listened area under curve (AUC): " + mostListenedAUC)
 
     val evaluations =
       for (rank		  <- Seq(5,	30);
@@ -143,10 +163,8 @@ class RunRecommender(private val spark: SparkSession) {
           (auc, (rank, regParam, alpha))
         }
 
-    if(log.level >=3) {
-      log.info("Evaluations:")
-      evaluations.sorted.reverse.foreach(println)
-    }
+    log.info("Evaluations")
+    evaluations.sorted.reverse.foreach(println)
 
     trainData.unpersist()
     cvData.unpersist()
@@ -165,7 +183,7 @@ class RunRecommender(private val spark: SparkSession) {
     val allData = buildCounts(rawUserArtistData, bArtistAlias).cache()
     val artistByID = buildArtistByID(rawArtistData)
 
-    val model = buildALSModel(10, 1.0, 40.0, 20, allData)
+    val model = buildALSModel(30, 1.0, 40.0, 20, allData)
 
     allData.unpersist()
     showMostListened(rawUserArtistData, bArtistAlias, userID, artistByID, allData)
@@ -173,11 +191,9 @@ class RunRecommender(private val spark: SparkSession) {
     val topRecommendations = makeRecommendations(model, userID, numRecommendations)
     val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
 
-    if(log.level >=3) {
-      log.info("Recommendations")
-      artistByID.join(spark.createDataset(recommendedArtistIDs).toDF("id"), "id").
-        select("name").show()
-    }
+    log.info("Recommendations")
+    artistByID.join(spark.createDataset(recommendedArtistIDs).toDF("id"), "id").
+      select("name").show()
 
     model.userFactors.unpersist()
     model.itemFactors.unpersist()

@@ -3,19 +3,36 @@ class CustomLogger {
   val level = 3
 
   // Prompt for numeric parameter via the command line
-  def ask(
+  def askInt(
     paramDescription: String,
     reTypeTitle: Boolean = true
   ): Int = {
     try {
       if(reTypeTitle) {
-        print("Enter " + paramDescription + ": ")
+        print("Enter " + paramDescription)
       }
       scala.io.StdIn.readInt()
     } catch {
       case e: Exception =>
-        print("Please, enter a valid " + paramDescription + ": ")
-        ask(paramDescription, false)
+        print("Please, enter a valid " + paramDescription)
+        askInt(paramDescription, false)
+    }
+  }
+
+  // Prompt for numeric parameter via the command line
+  def askString(
+    paramDescription: String,
+    reTypeTitle: Boolean = true
+  ): String = {
+    try {
+      if(reTypeTitle) {
+        print("Enter " + paramDescription)
+      }
+      scala.io.StdIn.readLine()
+    } catch {
+      case e: Exception =>
+        print("Please, enter a valid " + paramDescription)
+        askString(paramDescription, false)
     }
   }
 

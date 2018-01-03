@@ -4,5 +4,5 @@ data/*.txt
 *.iml
 target
 tmp
-config.properties
+conf/general/env.properties
 Dockerfile

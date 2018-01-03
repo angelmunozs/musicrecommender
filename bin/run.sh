@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # ==============================================================================================================
 # Dependencies
@@ -23,28 +24,14 @@ print_usage () {
     exit 1
 }
 
-# Compile and package code
-generate_jar () {
-    # Compile code with SBT
-    log_info "Compiling recommender code"
-    $INSTALLS_DIR/sbt/bin/sbt compile
-    # Create JAR with SBT
-    log_info "Packaging compiled recommender code"
-    $INSTALLS_DIR/sbt/bin/sbt package
-}
-
 # Run locally
 run_local () {
     # 1. Compile and pack with SBT
     generate_jar
-    # 2. Launch recommender with spark-submit after copying data to /tmp/data
-    log_info "Executing recommender with spark-submit"
-    $INSTALLS_DIR/spark/bin/spark-submit \
-    --class "RunRecommender" \
-    --master "local[*]" \
-    --executor-memory 4G \
-    --total-executor-cores 4 \
-    ./target/scala-2.11/musicrecommender_2.11-0.1.jar
+    # 2. Generate env.properties file
+    generate_properties "file:///home/angel/www/musicrecommender/data"
+    # 3. Launch recommender with spark-submit after copying data to /tmp/data
+    execute_jar "local[*]"
 }
 
 # Run locally
@@ -53,14 +40,39 @@ run_docker () {
     spark_init
     # 2. Compile and pack with SBT
     generate_jar
-    # 3. Launch recommender with spark-submit after copying data to /tmp/data
+    # 3. Generate env.properties file
+    generate_properties "file:///home/angel/www/musicrecommender/data"
+    # 4. Launch recommender with spark-submit after copying data to /tmp/data
+    execute_jar "spark://$(get_master_ip):7077"
+}
+
+# Execute JAR with spark-submit
+execute_jar () {
     log_info "Executing recommender with spark-submit"
     $INSTALLS_DIR/spark/bin/spark-submit \
     --class "RunRecommender" \
-    --master "spark://$(get_master_ip):7077" \
-    --executor-memory 4G \
+    --master "$1" \
+    --executor-memory 8G \
     --total-executor-cores 4 \
     ./target/scala-2.11/musicrecommender_2.11-0.1.jar
+}
+
+# Generate conf/general/env.properties file
+generate_properties () {
+    # 1. Create directory conf/geeral if not existing
+    mkdir -p conf/general
+    # 2. Echo content to file conf/general/env.properties
+    echo "DATA_HOME=$1" > conf/general/env.properties
+}
+
+# Compile and package code
+generate_jar () {
+    # Compile code with SBT
+    log_info "Compiling recommender code"
+    $INSTALLS_DIR/sbt/bin/sbt compile
+    # Create JAR with SBT
+    log_info "Packaging compiled recommender code"
+    $INSTALLS_DIR/sbt/bin/sbt package
 }
 
 # Launch Spark master and workers

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Script to deploy development environment for this project.
 
 # ==============================================================================================================
@@ -12,6 +13,7 @@ source bin/common.sh
 # ==============================================================================================================
 
 # Versions to download
+SPARK_VERSION=2.2.0
 SBT_VERSION=1.0.4
 SCALA_VERSION=2.11.12
 IDEA_VERSION=2017.2.5
@@ -68,6 +70,21 @@ sudo apt-get update
 sudo apt-get install -y oracle-java8-installer
 export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 log_success "Oracle JDK 8 sucessfully installed in $JAVA_HOME."
+
+# Download and install Spark
+if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
+    wget http://apache.rediris.es/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+  	tar -zxvf spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+  	rm spark-$SPARK_VERSION-bin-hadoop2.7.tgz
+  	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
+  	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
+    log_success "Apache Spark downloaded and installed in $SPARK_HOME."
+    # Export default Spark conf
+    echo "spark.driver.memory    8g" > $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.driver.cores     4" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.executor.memory  8g" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.executor.cores   4" >> $SPARK_HOME/conf/spark-defaults.conf
+fi
 
 # Download and install Scala
 if [ ! -d scala-$SCALA_VERSION ]; then

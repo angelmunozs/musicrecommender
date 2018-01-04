@@ -41,14 +41,14 @@ fi
 cd $PROJECTS_LOCATION
 
 # Download custom project (or git pull if present)
-if [ ! -d $PROJETC_NAME ]; then
-	git clone https://github.com/angelmunozs/$PROJETC_NAME
-	log_success "Code for $PROJETC_NAME from @angelmunozs copied to $PROJECTS_LOCATION/$PROJETC_NAME."
+if [ ! -d $PROJECT_NAME ]; then
+	git clone https://github.com/angelmunozs/$PROJECT_NAME
+	log_success "Code for $PROJECT_NAME from @angelmunozs copied to $PROJECTS_LOCATION/$PROJECT_NAME."
 else
-	cd $PROJETC_NAME
+	cd $PROJECT_NAME
 	git pull
 	cd ..
-	log_success "Code for $PROJETC_NAME from @angelmunozs in $PROJECTS_LOCATION/$PROJETC_NAME updated."
+	log_success "Code for $PROJECT_NAME from @angelmunozs in $PROJECTS_LOCATION/$PROJECT_NAME updated."
 fi
 
 # Change directory
@@ -94,16 +94,6 @@ if [ ! -d scala-$SBT_VERSION ]; then
 	ln -sf sbt-$SBT_VERSION sbt
 	export SBT_HOME=$INSTALLS_DIR/sbt-$SBT_VERSION
 	log_success "Scala downloaded and installed in $SCALA_HOME"
-fi
-
-# Download IntelliJ IDEA 2.5 if not present
-if [ ! -d idea-IC-172.4343.14 ]; then
-	wget https://download.jetbrains.com/idea/ideaIC-$IDEA_VERSION.tar.gz
-	tar -zxvf ideaIC-$IDEA_VERSION.tar.gz
-	rm ideaIC-$IDEA_VERSION.tar.gz
-	ln -sf idea-IC-172.4343.14 idea
-	export IDEA_HOME=$INSTALLS_DIR/idea-IC-172.4343.14
-	log_success "IntelliJ IDEA downloaded and installed in $IDEA_HOME."
 fi
 
 # Change directory

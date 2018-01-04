@@ -24,11 +24,8 @@ object RunRecommender {
     val spark = SparkSession.builder().getOrCreate()
 
     try {
-      // Optional, but may help avoid errors due to long lineage
-      spark.sparkContext.setCheckpointDir(args(0))
-
       // Parameters
-      val dataHome = args(1) + "/"
+      val dataHome = args(0) + "/"
       val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
       val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
       val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")

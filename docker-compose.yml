@@ -45,7 +45,7 @@ worker1:
   hostname: worker1
   environment:
     SPARK_CONF_DIR: /conf
-    SPARK_WORKER_CORES: 4
+    SPARK_WORKER_CORES: 2
     SPARK_WORKER_MEMORY: 4g
     SPARK_WORKER_PORT: 8881
     SPARK_WORKER_WEBUI_PORT: 8081
@@ -72,7 +72,7 @@ worker2:
   hostname: worker2
   environment:
     SPARK_CONF_DIR: /conf
-    SPARK_WORKER_CORES: 4
+    SPARK_WORKER_CORES: 2
     SPARK_WORKER_MEMORY: 4g
     SPARK_WORKER_PORT: 8882
     SPARK_WORKER_WEBUI_PORT: 8082

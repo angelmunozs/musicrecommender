@@ -50,28 +50,24 @@ run_docker () {
 
 # Execute JAR with spark-submit
 # Parameters:
-# - $1: Spark checkpoint directory, to be read by main JAR.
-# - $2: Data home, to be read by main JAR.
+# - $1: Data home, to be read by main JAR.
 execute_jar_locally () {
     log_info "Executing recommender locally with spark-submit"
     $INSTALLS_DIR/spark/bin/spark-submit \
     --class "RunRecommender" \
     --master "local[*]" \
-    --executor-memory 8G \
-    --total-executor-cores 4 \
-    ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1 $2
+    ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1
 }
 
 # Execute JAR in Spark master
 # Parameters:
-# - $1: Spark checkpoint directory, to be read by main JAR.
-# - $2: Data home, to be read by main JAR.
+# - $1: Data home, to be read by main JAR.
 execute_jar_in_master () {
     log_info "Executing recommender in Spark master with spark-submit"
     docker exec -it musicrecommender_master_1 bin/spark-submit \
     --class "RunRecommender" \
     --master "spark://$(get_ip musicrecommender_master_1):7077" \
-    /tmp/target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1 $2
+    /tmp/target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1
 }
 
 # Compile and package code

@@ -52,11 +52,11 @@ object RunRecommender {
   ): Unit = {
 
     println("List of actions:\n"+
-      " [1] Make recommendation\n"+
+      " [1] Make recommendations\n"+
       " [2] Show most listened\n"+
       " [3] Show statistics\n" +
       " [4] Search artist\n"+
-      " [5] Evaluate recommendation\n"+
+      " [5] Evaluate recommendations\n"+
       " [q] Exit\n")
     val action = log.askString("action (examples: 1, 2, 3, 4, q)")
 
@@ -190,7 +190,7 @@ class RunRecommender(private val spark: SparkSession) {
     val topRecommendations = makeRecommendations(model, userID, numRecommendations)
     val recommendedArtistIDs = topRecommendations.select("artist").as[Int].collect()
 
-    log.result("Recommendations")
+    log.result("Showing " + numRecommendations + " recommendations for user " + userID)
     artistByID.join(spark.createDataset(recommendedArtistIDs).toDF("id"), "id").
       select("name").show()
 

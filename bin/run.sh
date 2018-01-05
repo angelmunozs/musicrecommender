@@ -33,7 +33,7 @@ run_local () {
     # 1. Compile and pack with SBT
     generate_jar $1
     # 2. Launch recommender with spark-submit
-    execute_jar_locally "file:///home/angel/www/musicrecommender/data"
+    execute_jar_locally "file:///home/angel/www/musicrecommender"
 }
 
 # Run in dockerized Spark and Hadoop
@@ -45,7 +45,7 @@ run_docker () {
     # 2. Compile and pack with SBT
     generate_jar $1
     # 3. Launch recommender with spark-submit
-    execute_jar_in_master "hdfs://$(get_ip musicrecommender_hadoop_1):9000/user/ds"
+    execute_jar_in_master "hdfs://$(get_ip musicrecommender_hadoop_1):9000/user"
 }
 
 # Execute JAR with spark-submit
@@ -54,6 +54,9 @@ run_docker () {
 execute_jar_locally () {
     log_info "Executing recommender locally with spark-submit"
     $INSTALLS_DIR/spark/bin/spark-submit \
+    --driver-memory 8G \
+    --executor-cores 2 \
+    --executor-memory 8G \
     --class "RunRecommender" \
     --master "local[*]" \
     ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1
@@ -65,6 +68,7 @@ execute_jar_locally () {
 execute_jar_in_master () {
     log_info "Executing recommender in Spark master with spark-submit"
     docker exec -it musicrecommender_master_1 bin/spark-submit \
+    --driver-memory 8G \
     --class "RunRecommender" \
     --master "spark://$(get_ip musicrecommender_master_1):7077" \
     /tmp/target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1

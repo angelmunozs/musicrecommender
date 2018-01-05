@@ -69,11 +69,6 @@ if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
   	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
   	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
     log_success "Apache Spark downloaded and installed in $SPARK_HOME."
-    # Export default Spark conf
-    echo "spark.driver.memory    4g" > $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.driver.cores     2" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.executor.memory  4g" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.executor.cores   2" >> $SPARK_HOME/conf/spark-defaults.conf
 fi
 
 # Download and install Scala

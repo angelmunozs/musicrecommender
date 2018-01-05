@@ -25,10 +25,14 @@ object RunRecommender {
 
     try {
       // Parameters
-      val dataHome = args(0) + "/"
+      val checkpointDir = args(0) + "/tmp/"
+      val dataHome = args(0) + "/data/"
       val rawUserArtistData = spark.read.textFile(dataHome + "user_artist_data.txt")
       val rawArtistData = spark.read.textFile(dataHome + "artist_data.txt")
       val rawArtistAlias = spark.read.textFile(dataHome + "artist_alias.txt")
+
+      // Optional, but may help avoid errors due to long lineage
+      spark.sparkContext.setCheckpointDir(checkpointDir)
 
       // Create new recommender
       val runRecommender = new RunRecommender(spark)

@@ -17,8 +17,8 @@ print_usage () {
     echo "Usage: "
     echo " ./bin/run.sh \${ENVIRONMENT}"
     echo "Parameters: "
-    echo " - \${ENVIRONMENT}: desired environment (\"local\" or \"docker\")"
-    echo " - \${OPTIONS}:     options (\"--no-compile\")."
+    echo " - 1st parameter: environment (required). Values: \"local\" or \"docker\"."
+    echo " - 2nd parameter: options (not required). Values: \"--no-compile\"."
     echo "Examples: "
     echo " ./bin/run.sh local"
     echo " ./bin/run.sh docker"
@@ -111,13 +111,11 @@ get_ip () {
 
 # Exit if no first parameter
 if [ -z $1 ]; then
-    log_error "No environment selected"
     print_usage
 fi
 
 # Exit if unknown option
 if [ ! -z $2 ] && [ "$2" != "--no-compile" ]; then
-    log_error "Unknown option \"$2\""
     print_usage
 fi
 
@@ -130,7 +128,6 @@ case "$1" in
         run_docker $2
     ;;
     *)
-        log_error "Unknown environment \"$1\""
         print_usage
     ;;
 esac

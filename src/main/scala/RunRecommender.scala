@@ -91,6 +91,7 @@ object RunRecommender {
         println("Bye")
         System.exit(0)
       case _ =>
+        log.newLine()
         log.error("Unknown action \"" + action + "\"")
     }
     askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
@@ -168,6 +169,7 @@ class RunRecommender(private val spark: SparkSession) {
 
     log.result("Evaluations")
     evaluations.sorted.reverse.foreach(println)
+    log.newLine()
 
     trainData.unpersist()
     cvData.unpersist()

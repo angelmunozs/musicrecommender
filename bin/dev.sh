@@ -40,17 +40,6 @@ fi
 # Change directory
 cd $PROJECTS_LOCATION
 
-# Download custom project (or git pull if present)
-if [ ! -d $PROJECT_NAME ]; then
-	git clone https://github.com/angelmunozs/$PROJECT_NAME
-	log_success "Code for $PROJECT_NAME from @angelmunozs copied to $PROJECTS_LOCATION/$PROJECT_NAME."
-else
-	cd $PROJECT_NAME
-	git pull
-	cd ..
-	log_success "Code for $PROJECT_NAME from @angelmunozs in $PROJECTS_LOCATION/$PROJECT_NAME updated."
-fi
-
 # Change directory
 cd $INSTALLS_DIR
 

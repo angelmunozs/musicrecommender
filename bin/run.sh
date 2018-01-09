@@ -56,10 +56,8 @@ execute_jar_locally () {
     $INSTALLS_DIR/spark/bin/spark-submit \
     --driver-cores 4 \
     --driver-memory 16G \
-    --executor-cores 2 \
-    --executor-memory 8G \
     --class "RunRecommender" \
-    --master "local[2]" \
+    --master "local[*]" \
     ./target/scala-$SCALA_SHORT_VERSION/musicrecommender_$SCALA_SHORT_VERSION-$PROJECT_VERSION.jar $1
 }
 

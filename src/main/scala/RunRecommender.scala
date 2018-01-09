@@ -64,6 +64,9 @@ object RunRecommender {
       " [q] Exit\n")
     val action = log.askString("action (examples: 1, 2, 3, 4, q)")
 
+    // Start time
+    val start_time = System.nanoTime
+
     action match {
       case "1" =>
         // Prompt for user ID and no. recommendations via the command line
@@ -94,6 +97,11 @@ object RunRecommender {
         log.newLine()
         log.error("Unknown action \"" + action + "\"")
     }
+
+    // Log elapsed time
+    println("Elapsed time: " + (System.nanoTime - start_time) / 1e9d + "s")
+    log.newLine()
+
     askAction(rawUserArtistData, rawArtistData, rawArtistAlias, runRecommender)
   }
 }

@@ -1,7 +1,7 @@
 .idea
 *.iml
+build.sbt
 data
 spark-warehouse
-src/main/scala/target
 target
 tmp

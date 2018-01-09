@@ -1,8 +1,7 @@
-data/*.txt
-!data/README.txt
 .idea
 *.iml
+data
+spark-warehouse
+src/main/scala/target
 target
 tmp
-conf/general/env.properties
-Dockerfile

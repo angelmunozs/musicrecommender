@@ -25,30 +25,22 @@ DATA_FILES=(
 # Main
 # ==============================================================================================================
 
-# Install git
-sudo apt-get update
-sudo apt-get install -y git
-
 # Make directories (if not present yet)
-if [ ! -d $PROJECTS_LOCATION ]; then
-	mkdir $PROJECTS_LOCATION
-fi
 if [ ! -d $INSTALLS_DIR ]; then
 	mkdir $INSTALLS_DIR
 fi
 
 # Change directory
-cd $PROJECTS_LOCATION
-
-# Change directory
 cd $INSTALLS_DIR
 
 # Download and install Oracle JDK
-sudo add-apt-repository ppa:webupd8team/java
-sudo apt-get update
-sudo apt-get install -y oracle-java8-installer
-export JAVA_HOME=/usr/lib/jvm/java-8-oracle
-log_success "Oracle JDK 8 sucessfully installed in $JAVA_HOME."
+if [ ! -d /usr/lib/jvm/jdk1.8.0_144 ]; then
+	sudo add-apt-repository ppa:webupd8team/java
+	sudo apt-get update
+	sudo apt-get install -y oracle-java8-installer
+	export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+	log_success "Oracle JDK 8 sucessfully installed in $JAVA_HOME."
+fi
 
 # Download and install Spark
 if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
@@ -91,7 +83,3 @@ do
 		log_success "Downloaded file $DATA_FILE into $LOCAL_DATA_DIR"
 	fi
 done
-
-# Open IntelliJ IDEA in background
-log_success "Opening IntelliJ IDEA development tool."
-$INSTALLS_DIR/idea/bin/idea.sh

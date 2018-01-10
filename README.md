@@ -13,23 +13,44 @@ Execute script `dev.sh`, located inside `bin/`.
 ./bin/dev.sh
 ```
 
-This script will clone/pull the repository into folder `~/www` and download and install dev dependencies into `~/opt`:
+This script will download and install dev dependencies into `/opt`:
 
 * Oracle JDK 8.
 * Scala 2.12.4.
 * Apache Spark 2.2.0.
-* IntelliJ IDEA 2017.2.5.
+* SBT 1.0.4.
+* Datasets to be used by the recommender.
 
-## Install dependencies
+## Modify datasets
 
-IntelliJ IDEA will automatically detect dependencies on file `build.sbt` and [install them to cache](https://www.scala-lang.org/documentation/getting-started-intellij-track/building-a-scala-project-with-intellij-and-sbt.html).
+Execute script `addlog.sh`, located inside `bin/`.
 
-To add a new Maven-managed dependency, just edit `build.sbt` and add the line that you find when searching the dependency on [Maven Repository](https://mvnrepository.com/) and selecting *sbt*:
-
+```sh
+./bin/addlog.sh
 ```
-libraryDependencies += groupID % artifactID % revision
+
+It is essential that you have downloaded the datasets previously.
+
+## Execute recommender
+
+There's two different environments you can execute the recommender on:
+
+- **local**, which means that the compiler, the code and Spark will execute on your local machine. The datasets will be read directly from the local file system.
+- **docker**, which means that the compiler will be executed on your local machine, Spark will be executed on clustered mode over 5 Docker containers (one master and 4 workers), the code will be executed on Spark master and the datasets will be read from a dockerized Hadoop file system.
+
+To execute any of them, you just need to execute script `run.sh`, located inside `bin/`.
+
+```sh
+./bin/run.sh ${ENVIRONMENT} [${OPTIONS}]
 ```
 
-If IntelliJ IDEA doesn't automatically update `import` statements when adding a new dependency, read [this article](https://stackoverflow.com/questions/9980869/force-intellij-idea-to-reread-all-maven-dependencies).
+where `${ENVIRONMENT}` can be either **local** or **docker**, and `${OPTIONS}` can be `--no-compile` (to avoid compiling the code again and just executing the last generated JAR) or none.
 
-Click [here](http://www.scala-sbt.org/1.x/docs/Library-Dependencies.html) to learn more about *sbt* dependencies.
+### Examples:
+
+```sh
+./bin/run.sh local
+./bin/run.sh docker
+./bin/run.sh local --no-compile
+./bin/run.sh docker --no-compile
+```

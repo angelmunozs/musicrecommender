@@ -15,7 +15,7 @@ source bin/common.sh
 # Usage
 print_usage () {
     echo "Usage: "
-    echo " ./bin/run.sh \${ENVIRONMENT}"
+    echo " ./bin/run.sh \${ENVIRONMENT} [\${OPTIONS}]"
     echo "Parameters: "
     echo " - 1st parameter: environment (required). Values: \"local\" or \"docker\"."
     echo " - 2nd parameter: options (not required). Values: \"--no-compile\"."

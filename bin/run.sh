@@ -33,7 +33,7 @@ run_local () {
     # 1. Compile and pack with SBT
     generate_jar $1
     # 2. Launch recommender with spark-submit
-    execute_jar_locally "file:///home/angel/www/musicrecommender"
+    execute_jar_locally "file://$PROJECTS_LOCATION/$PROJECT_NAME"
 }
 
 # Run in dockerized Spark and Hadoop

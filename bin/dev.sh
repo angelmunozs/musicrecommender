@@ -84,3 +84,6 @@ do
 		log_success "Downloaded file $DATA_FILE into $LOCAL_DATA_DIR"
 	fi
 done
+
+# Giver R+W premissions for all users to data/*
+sudo chmod 666 data/*

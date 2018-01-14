@@ -73,6 +73,7 @@ if [ ! -d scala-$SBT_VERSION ]; then
 fi
 
 # Change directory
+mkdir -p $LOCAL_DATA_DIR
 cd $LOCAL_DATA_DIR
 
 # Download Audioscrobbler data from desired mirror

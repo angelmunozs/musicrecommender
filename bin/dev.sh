@@ -49,6 +49,7 @@ if [ ! -d spark-$SPARK_VERSION-bin-hadoop2.7 ]; then
   	rm spark-$SPARK_VERSION-bin-hadoop2.7.tgz
   	ln -sf spark-$SPARK_VERSION-bin-hadoop2.7 spark
   	export SPARK_HOME=$INSTALLS_DIR/spark-$SPARK_VERSION-bin-hadoop2.7
+  	cp conf/common/* $SPARK_HOME/conf
     log_success "Apache Spark downloaded and installed in $SPARK_HOME."
 fi
 
@@ -86,4 +87,4 @@ do
 done
 
 # Giver R+W premissions for all users to data/*
-sudo chmod 666 data/*
+sudo chmod 666 $LOCAL_DATA_DIR/*
